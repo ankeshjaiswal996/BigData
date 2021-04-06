@@ -1,0 +1,56 @@
+
+import scala.reflect.runtime.universe
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.classification.LogisticRegression
+import org.apache.spark.ml.feature.Bucketizer
+import org.apache.spark.ml.feature.Normalizer
+import org.apache.spark.ml.feature.StringIndexer
+import org.apache.spark.ml.feature.VectorAssembler
+import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.functions.mean
+
+val bank_people_data = spark.read.option("multiline","true").json("/user/jismimarypg89_gmail/Bank_edited.json")
+bank_people_data.show()
+
+bank_people_data.registerTempTable("datanewtable")
+
+val agedata = spark.sql("select age, count(*) as number from datanewtable where y='yes' group by age order by number desc")
+agedata.show()
+
+val maritaldata = spark.sql("select marital, count(*) as number from datanewtable where y='yes' group by marital order by number desc")
+maritaldata.show()
+
+val ageandmaritaldata = spark.sql("select age, marital, count(*) as number from datanewtable where y='yes' group by age,marital order by number desc")
+ageandmaritaldata.show()
+
+val agedata = spark.udf.register("agedata",(age:Int) => {
+if (age < 20)
+"Teen"
+else if (age > 20 && age <= 32)
+"Young"
+else if (age > 33 && age <= 55)
+"Middle Aged"
+else
+"old"
+})
+
+
+val banknewDF = bank_people_data.withColumn("age",agedata(bank_people_data("age")))
+banknewDF.show()
+
+banknewDF.registerTempTable("banknewtable")
+
+val targetage = spark.sql("select age, count(*) as number from banknewtable where y='yes' group by age order by number desc")
+targetage.show()
+
+val agedata2 = new StringIndexer().setInputCol("age").setOutputCol("ageindex")
+
+var strindModel = agedata2.fit(banknewDF)
+
+strindModel.transform(banknewDF).select("age","ageIndex").show(5)
+
+ 

@@ -1,0 +1,35 @@
+1-val bank_people_data = spark.read.option("multiline","true").json  ("/user/ankeshjaiswal996_gmail/bank_edited.json")
+2-bank_people_data.show()
+
+3-bank_people_data.registerTempTable("datanewtable")
+
+
+
+4-val agedata = spark.sql("select age, count(*) as number from datanewtable where y='yes' group by age order by   number desc")
+5-agedata.show()
+
+
+6-val maritaldata = spark.sql("select marital, count(*) as number from datanewtable where y='yes' group by   marital order by number desc")
+7-maritaldata.show()
+
+8-val ageandmaritaldata = spark.sql("select age, marital, count(*) as number from datanewtable where y='yes'   group by age,marital order by number desc")
+9-ageandmaritaldata.show()
+
+10-val agedata = spark.udf.register("agedata",(age:Int) => {if (age < 20)"Teen"else if (age > 20 && age <=    32)"Young"else if (age > 33 && age <= 55)"Middle Aged"else"old"})
+
+
+11-val banknewDF = bank_people_data.withColumn("age",agedata(bank_people_data("age")))
+   banknewDF.show()
+
+12-banknewDF.registerTempTable("banknewtable")
+
+13-val targetage = spark.sql("select age, count(*) as number from banknewtable where y='yes' group by age order    by number desc")
+   targetage.show()
+
+14-import org.apache.spark.ml.feature.StringIndexer
+
+15-val agedata2 = new StringIndexer().setInputCol("age").setOutputCol("ageindex")
+
+16-var strindModel = agedata2.fit(banknewDF)
+
+17-strindModel.transform(banknewDF).select("age","ageIndex").show(5)

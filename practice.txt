@@ -1,0 +1,19 @@
+val rdd1 = sc.parallelize(Array("jan","feb"))
+val result = rdd1.collect()
+val words = spark.parallelize(Seq("ja","feb","kiojh"))
+val wordpair = words.map(w=> (w.charAt(0), w))
+val a = sc.parallelize(List("dog","almon"),3)
+val b = a.map(_.length)
+val c = a.zip(b)
+c.collect
+val a = sc.parallelize(1 to 10)
+val b = a.filter(_%2 ==0)
+b.collect
+a.groupBy(x=> { if(x%2 ==0) "even" else "odd"}).collect
+val a = sc.parallelize(List("hi","hello","world"),3)
+val b = a.keyBy(_.length)
+val c = sc.parallelize(List("hi","hello","koil"),3)
+val d = c.keyBy(_.length)
+val k = b.join(d)
+k.toDebugString
+k.collect
